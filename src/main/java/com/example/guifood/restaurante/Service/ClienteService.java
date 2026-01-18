@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Gatherer;
 
 @Service
@@ -33,21 +34,34 @@ public class ClienteService {
     }
 
     public Cliente criarCliente(Cliente cliente) throws IOException, InterruptedException {
-        String email = "https://api.ValidEmail.net/?email=" + cliente.getEmail() + "&token=56a0339b1dac4ca5b87b80e6fa267611";
+
+        // Chamada da API externa de validação
+        String url = "https://api.ValidEmail.net/?email=" + cliente.getEmail() + "&token=";
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(email))
+                .uri(URI.create(url))
                 .build();
-        HttpResponse<String> reponse = client
-                .send(request, HttpResponse.BodyHandlers.ofString());
-        String json = reponse.body();
-        if (!(json.contains("\"IsValid\":true"))) {
-            throw new RuntimeException("Email invalido");
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        String json = response.body();
+
+        // Interpretar JSON corretamente usando Gson
+        Gson gson = new Gson();
+        Map<String, Object> map = gson.fromJson(json, Map.class);
+
+        Object isValidObj = map.get("IsValid");
+        if (!(isValidObj instanceof Boolean)) {
+            throw new RuntimeException("Erro na validação do email: resposta da API inesperada");
         }
-        boolean existe = repository.existsByEmail(cliente.getEmail());
-        if (existe) {
+        if (!((Boolean) isValidObj)) {
+            throw new RuntimeException("Email inválido");
+        }
+
+        // Checa duplicidade no banco
+        if (repository.existsByEmail(cliente.getEmail())) {
             throw new RuntimeException("Email já cadastrado");
         }
+
+        // Salva no banco
         return repository.save(cliente);
     }
 
