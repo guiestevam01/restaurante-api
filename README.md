@@ -1,6 +1,6 @@
-projeto JPA Hibernate para registro de itens do cardápio e histórico de pedidos - sem servidor de aplicação
+# projeto JPA Hibernate para registro de itens do cardápio e histórico de pedidos - sem servidor de aplicação
 
-#Tecnologias usadas:
+## Tecnologias usadas:
 - Java 17+
 - Spring Boot (Web, Data JPA, Starter)
 - Hibernate (JPA)
